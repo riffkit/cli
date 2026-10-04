@@ -80,7 +80,8 @@ export function saveSession(home, base, token) {
 export function runCli(args, { home, base, token, env = {}, cwd, onSpawn } = {}) {
   const childEnv = { ...process.env }
   for (const key of Object.keys(childEnv)) if (key.startsWith('RIFFKIT_')) delete childEnv[key]
-  Object.assign(childEnv, { HOME: home, USERPROFILE: home, RIFFKIT_BASE_URL: base }, env)
+  // The daily update check is off unless a test sets it up (test/update.test.js).
+  Object.assign(childEnv, { HOME: home, USERPROFILE: home, RIFFKIT_BASE_URL: base, RIFFKIT_NO_UPDATE_CHECK: '1' }, env)
   if (token) saveSession(home, base, token)
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [BIN, ...args], { env: childEnv, cwd: cwd ?? home, stdio: ['pipe', 'pipe', 'pipe'] })

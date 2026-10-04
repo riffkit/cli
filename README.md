@@ -88,6 +88,11 @@ Nothing is ever retried by the CLI on its own.
 |---|---|
 | `RIFFKIT_TOKEN` | A riffkit.ai session to use instead of `~/.riffkit/session` (for CI and containers). It goes to riffkit.ai only: with `RIFFKIT_BASE_URL` set to another server, that server's own session file is used |
 | `RIFFKIT_BASE_URL` | Another Riffkit server, such as a local one (`http://localhost:8000`). Plain http is accepted only for localhost. Each server gets its own session file, `~/.riffkit/session-<host>-<port>` |
+| `RIFFKIT_NO_UPDATE_CHECK` | Set to `1` to skip the daily check for a newer CLI (it is also skipped in CI) |
+
+## Updates
+
+New commands and options need no update: they come from Riffkit's list. For the CLI's own code, it asks npm at most once a day whether a newer `@riffkit/cli` is out and, if so, adds one line to stderr: `npm i -g @riffkit/cli@latest` updates it. It never installs anything by itself, and a check that gets no answer within 1.5 seconds is skipped silently.
 
 The command list is kept in `~/.riffkit/cli-manifest-<host>.json` and checked with Riffkit again once the time Riffkit gives it (5 minutes) has passed; offline, the kept list is used.
 

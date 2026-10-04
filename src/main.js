@@ -10,6 +10,7 @@ import logout from './own/logout.js'
 import wait from './own/wait.js'
 import { NoAnswer, call, noAnswerError, report } from './request.js'
 import { VERSION, siteFrom } from './site.js'
+import { updateNotice } from './update.js'
 
 // Commands written here rather than listed by the server. Each calls
 // capabilities by name, through the same request builder.
@@ -19,16 +20,21 @@ const USAGE = 'Usage: riffkit <command> [arguments] [--option value ...]. riffki
 
 /** Run one command line; returns the exit code. Nothing it prints holds the session token. */
 export async function main(argv, io) {
+  let code
   try {
-    return await run(argv, io)
+    code = await run(argv, io)
   } catch (err) {
     if (err instanceof CliError) {
       io.stderr.write(`riffkit: ${err.message}\n`)
-      return err.code
+      code = err.code
+    } else {
+      io.stderr.write(`riffkit: unexpected error: ${err?.message ?? err}\n`)
+      code = EXIT.REFUSED
     }
-    io.stderr.write(`riffkit: unexpected error: ${err?.message ?? err}\n`)
-    return EXIT.REFUSED
   }
+  // After the command, so its own output comes first and the line goes to stderr only.
+  await updateNotice(io.env ?? {}, io.stderr)
+  return code
 }
 
 async function run(argv, io) {
