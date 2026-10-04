@@ -1,0 +1,1917 @@
+{
+  "commands": [
+    {
+      "consumed_by": null,
+      "description": "Read the credit balance: available (what a new video can use), held by videos still rendering, today's spend and the daily limit. Every number is in internal units; divide by 100 for the credits the user sees. Call it when the user asks what is left, or before offering a retry.",
+      "effect": "read",
+      "name": "get_credits",
+      "params": [],
+      "route": "GET /api/usage/credits",
+      "title": "Check the credit balance"
+    },
+    {
+      "consumed_by": null,
+      "description": "Read what this account can use before proposing a video: the video engines with their resolutions and which of them are locked for this account (offer only unlocked ones), the default engine and resolution per mode (default_video_pairs), the engine that swaps best (swap_recommended_video_backend), the longest source video accepted in seconds (max_render_duration), how many products the account may own, and how many seconds of video the balance covers on the default engine (credit_cover). Takes no arguments.",
+      "effect": "read",
+      "name": "get_options",
+      "params": [],
+      "route": "GET /api/settings",
+      "title": "See what this account can use"
+    },
+    {
+      "consumed_by": null,
+      "description": "List the digital characters (the on-screen person of a video) this account can use. Each has an id, a persona text and has_any_active_avatar; only a character where that is true can render. In a swap the character's photo replaces the source's person, which works from one clear, front-facing photo of one person; a collage or a full-body sheet usually leaves the original face. This tool cannot show the photo. Characters and their photos are managed in the Riffkit web app, not here.",
+      "effect": "read",
+      "name": "list_characters",
+      "params": [],
+      "route": "GET /api/characters",
+      "title": "List characters"
+    },
+    {
+      "consumed_by": null,
+      "description": "List the account's products with their images. A product's id places it in a video; an image's name, written into content_anchor, puts that image on screen, and then only the named images are used. In a swap only a product that has images changes anything.",
+      "effect": "read",
+      "name": "list_products",
+      "params": [],
+      "route": "GET /api/products",
+      "title": "List products"
+    },
+    {
+      "consumed_by": null,
+      "description": "List templates a video can be made from: the account's own and the public library. Returns items and total; only a template with status analyzed and analysis_prompt_is_latest true can be used. Prefer public ones (visibility public) and the most used (sort used_desc). bgm_status says which music choices a template has. Ask for about 20 at a time with limit and offset, and narrow with search or tags.",
+      "effect": "read",
+      "name": "list_templates",
+      "params": [
+        {
+          "default": null,
+          "description": "List only templates in this exact status: collected, analyzing, analyzed or archived. Left out, every status except archived is listed.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "status",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "List only templates of this exact type; pipeline is the type a video is made from.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "template_type",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Comma-separated tags; only templates carrying every one of them are listed (case-insensitive).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "tags",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Text to look for, ignoring case, in a template's name, hook type and emotion arc.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "search",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "created_desc",
+          "description": "Order of the list: created_desc (newest first, the default), created_asc (oldest first) or used_desc (most used first).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "sort",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": 50,
+          "description": "How many templates to return at most (default 50).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "limit",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "default": 0,
+          "description": "How many templates to skip before the first one returned, for paging (default 0).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "offset",
+          "required": false,
+          "type": "integer"
+        }
+      ],
+      "route": "GET /api/formulas",
+      "title": "Browse templates"
+    },
+    {
+      "consumed_by": null,
+      "description": "Read one template: its summary fields plus extraction_summary (what happens in the source video, its spoken lines, what is on screen and the attention formula of each part). Use it to understand a template before writing content_anchor for it.",
+      "effect": "read",
+      "name": "get_template",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of the template to read (the `id` of an entry in the template list).",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "formula_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/formulas/{formula_id}",
+      "title": "Read a template"
+    },
+    {
+      "consumed_by": null,
+      "description": "Price a remake before remake_video, from exactly one source: a template (formula_id) or a TikTok link (tiktok_url). Send the submit's arguments: mode (the user's choice; its default is only what a call without it runs as), video_backend, resolution, n_characters and (adapt) n_ratios. Credits numbers in the answer are internal units: divide by 100. credits is the whole batch; billed_seconds is the length one video is charged for. Say \"about\" when exact is false, with more than one ratio, or for a swap source longer than one render (15 seconds; 30 on Seedance 2.5). source_seconds null: the length is unknown and credits is only a minimum; probe busy: ask again shortly. over_cap true: a swap of this source will be refused. locked true: the submit will refuse this engine and resolution. daily_limit_reached true: today's limit is used up. alternatives lists the other engines and resolutions this account may use, cheapest first; when fits is false, fitting_templates lists up to three that fit. Nothing is charged.",
+      "effect": "read",
+      "name": "quote_remake",
+      "params": [
+        {
+          "default": "adapt",
+          "description": "adapt keeps the source's formula and tells a new story; swap keeps the source's shots and changes only the person, the product or what content_anchor names. The user's choice: send it on every call (a call without it runs as adapt).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "mode",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Source option (give exactly one source): the id of an analyzed template, the account's own or a public one.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "formula_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Source option (give exactly one source): a TikTok link to one specific video, as its video page or a share short link; a profile page is refused. Only its length is read, from the link's metadata; nothing is downloaded.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "tiktok_url",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Source option (give exactly one source): the length in seconds of a video file about to be uploaded (in swap mode, of its video track).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "upload_seconds",
+          "required": false,
+          "type": "number"
+        },
+        {
+          "default": null,
+          "description": "Video engine: an `id` from the `video_backends` list of the account options. Left out, this account's default engine for this kind of video is used (`default_video_pairs` in the account options: adapt, swap or creation).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "video_backend",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Resolution: one of the chosen engine's `resolutions` in the account options, spelled as listed there. Send it together with video_backend: sent alone it is checked against this account's default engine for this kind of video, so it may be refused or render on an engine the user did not choose. Left out, the chosen engine's default resolution for this account is used.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "resolution",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": 0,
+          "description": "How many characters the video is made with: one video per character, and 0 (the default) prices one video with no character.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "n_characters",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "default": 1,
+          "description": "Adapt mode: how many aspect ratios are delivered, 1 to 4 (default 1). Ignored in swap mode.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "n_ratios",
+          "required": false,
+          "type": "integer"
+        }
+      ],
+      "route": "GET /api/riffs/quote",
+      "title": "Price a remake"
+    },
+    {
+      "consumed_by": null,
+      "description": "Price a Create before create_video, with the arguments the submit will get: duration_mode (and duration_seconds when it is fixed), video_backend, resolution and n_characters (one video per character). Credits numbers in the answer are internal units: divide by 100. credits is the whole batch; seconds is the length of one video. exact true (fixed): that is what the videos are charged. exact false (smart): say \"about\" or \"up to\", because the length follows the content; seconds is then the longest the balance allows (at most 45) and credits the most the batch can be charged. seconds null: the balance is below the shortest video (min_credits). fits false: the submit will be refused for the balance, so offer a shorter fixed length or another engine and resolution that get_options lists. locked true: the submit will refuse this engine and resolution for this account, so offer a pair that is not locked. daily_limit_reached true: today's limit is used up. Nothing is charged.",
+      "effect": "read",
+      "name": "quote_create",
+      "params": [
+        {
+          "default": "smart",
+          "description": "How the length is set: fixed renders duration_seconds; smart lets the engine pick the length, up to what the balance covers and at most 45 seconds. Left out, the call runs as smart.",
+          "enum": [
+            "smart",
+            "fixed"
+          ],
+          "in": "query",
+          "items": null,
+          "name": "duration_mode",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Length of the video in whole seconds, 4 to 45: required when duration_mode is fixed, ignored when it is smart or left out.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "duration_seconds",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "default": null,
+          "description": "Video engine: an `id` from the `video_backends` list of the account options. Left out, this account's default engine for this kind of video is used (`default_video_pairs` in the account options: adapt, swap or creation).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "video_backend",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Resolution: one of the chosen engine's `resolutions` in the account options, spelled as listed there. Send it together with video_backend: sent alone it is checked against this account's default engine for this kind of video, so it may be refused or render on an engine the user did not choose. Left out, the chosen engine's default resolution for this account is used.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "resolution",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": 1,
+          "description": "How many characters the video is made with: one video per character. Left out, or below 1, one video is priced.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "n_characters",
+          "required": false,
+          "type": "integer"
+        }
+      ],
+      "route": "GET /api/creation/quote",
+      "title": "Price a video from an idea"
+    },
+    {
+      "consumed_by": null,
+      "description": "For one finished video, list the aspect ratios its family already has (delivered or in progress) and the credits one more ratio costs (internal units, divide by 100). reframeable false means no ratio can be added to this video (a landscape video, or one whose original is gone). Call it before offering ratios and before add_ratios.",
+      "effect": "read",
+      "name": "quote_ratios",
+      "params": [
+        {
+          "default": null,
+          "description": "Asset id of a finished video; any ratio version of it answers for the whole family.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "asset_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/pipeline/backfill/occupied",
+      "title": "Price extra aspect ratios"
+    },
+    {
+      "consumed_by": null,
+      "description": "Follow one submission: every task of the batch with its status, progress and error, plus counts of completed, failed, running and queued. This is the progress check after remake_video, create_video, add_ratios or burn_subtitles; poll no faster than every 30 seconds. Tell progress in plain words from status and progress: current_step is an internal step name (a code, or a word in Chinese) and is never shown. A batch whose analysis task carries result.auto_generate_error made no video, even when that task reads completed. A finished task's result.asset_id is its video: read it with list_videos and hand it over with get_video_link. A task that reads dead was interrupted and can be retried.",
+      "effect": "read",
+      "name": "get_batch",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of the batch to follow, as returned by the submit.",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "batch_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/tasks/batch/{batch_id}",
+      "title": "Check a video's progress"
+    },
+    {
+      "consumed_by": null,
+      "description": "List the account's tasks, newest first, filtered by status, type or date. Use it to find recent or failed work, to follow a task that has no batch, and to check whether a submit went through before submitting again.",
+      "effect": "read",
+      "name": "list_tasks",
+      "params": [
+        {
+          "default": null,
+          "description": "Only tasks in this status, or in any of a comma-separated list of statuses: queued, running, completed, failed, dead, cancelled.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "status",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Only tasks of this type, or of any of a comma-separated list of types: pipeline (an adapt video), swap, creation, analyze, subtitle_burn, subtitle_reconcile. An added aspect ratio carries the type of the video it was made from.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "type",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Only tasks created at or after this moment, in UTC: a date (YYYY-MM-DD, from the start of that day) or a full ISO 8601 date-time.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "date_from",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Only tasks created at or before this moment, in UTC: a date (YYYY-MM-DD, through the end of that day) or a full ISO 8601 date-time.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "date_to",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Only tasks submitted by this user id, for telling a team's members apart; leave it out on an account with a single user.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "submitted_by_user_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": 100,
+          "description": "How many tasks to return at most, 1 to 500 (default 100).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "limit",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "default": 0,
+          "description": "How many tasks to skip before the first one returned, for paging (default 0).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "offset",
+          "required": false,
+          "type": "integer"
+        }
+      ],
+      "route": "GET /api/tasks",
+      "title": "List tasks"
+    },
+    {
+      "consumed_by": null,
+      "description": "List finished videos (asset_role final_reel) and uploaded reference files, each video with its suggested caption and hashtags (the post text to publish with it). Filter by asset_id to read the video a finished task made. The answer carries no link to the file: get_video_link gives one for a video's id.",
+      "effect": "read",
+      "name": "list_videos",
+      "params": [
+        {
+          "default": null,
+          "description": "Only the assets with these ids.",
+          "enum": null,
+          "in": "query",
+          "items": "string",
+          "name": "asset_id",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "default": null,
+          "description": "Only assets of this exact type: pipeline (an adapt video), creation, swap, or upload (an uploaded reference file).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "type",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Only assets in this role: final_reel (finished videos), or reference or product_material (uploaded files).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "asset_role",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Only videos made with these characters (character ids).",
+          "enum": null,
+          "in": "query",
+          "items": "string",
+          "name": "character",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "default": null,
+          "description": "Only assets linked to these products (product ids).",
+          "enum": null,
+          "in": "query",
+          "items": "string",
+          "name": "product_id",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "default": null,
+          "description": "Only videos made from these templates (template ids).",
+          "enum": null,
+          "in": "query",
+          "items": "string",
+          "name": "formula_id",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "default": null,
+          "description": "Only assets whose type is one of these (the values of `type`), for asking for several types at once.",
+          "enum": null,
+          "in": "query",
+          "items": "string",
+          "name": "source_type",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "default": null,
+          "description": "Only assets created within this window: today (since 00:00 UTC), 7d, 30d or 90d.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "created_window",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "created_desc",
+          "description": "Order of the list: created_desc (newest first, the default), created_asc (oldest first), character_az or product_az (by character or product name).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "sort",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": 1,
+          "description": "Page to return, counting from 1 (default 1).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "page",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "default": 50,
+          "description": "How many assets one page holds, 1 to 200 (default 50).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "limit",
+          "required": false,
+          "type": "integer"
+        }
+      ],
+      "route": "GET /api/assets",
+      "title": "List finished videos"
+    },
+    {
+      "consumed_by": null,
+      "description": "Get a link that opens a finished video in a browser without signing in. Call it when a video is finished, and whenever the user asks for the video. asset_id is the video's id: a finished task's result.asset_id, or an id from list_videos. Returns url, seconds_valid (6 hours from the call) and the UTC time until which the link works. Give the user url exactly as it is, and say that anyone who holds the link can open the video while it works. It opens the video's current version: after burn_subtitles, or once the link has stopped working, call it again for a fresh one. A 404 means this account has no finished video with that id. Nothing is charged and nothing about the video changes.",
+      "effect": "read",
+      "name": "get_video_link",
+      "params": [
+        {
+          "default": null,
+          "description": "Asset id of the finished video (an asset whose asset_role is final_reel).",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "asset_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/assets/{asset_id}/link",
+      "title": "Get a link to a finished video"
+    },
+    {
+      "consumed_by": null,
+      "description": "Read the caption layer Riffkit burned onto a finished video: the editable list of lines with their text, timing, position and colour. A 404 that mentions reconcile means no layer is recorded yet, so run reconcile_subtitles first. Text that is part of the picture itself is not in this list and cannot be edited.",
+      "effect": "read",
+      "name": "get_subtitles",
+      "params": [
+        {
+          "default": null,
+          "description": "Asset id of the finished video (an asset whose asset_role is final_reel).",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "asset_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/assets/{asset_id}/subtitles",
+      "title": "Read captions"
+    },
+    {
+      "consumed_by": null,
+      "description": "Remake an existing video as an adapt or a swap; the mode argument says what each keeps. Always send mode; when the request does not say which, ask before quoting: never assume adapt (its default is only what a call without it runs as). The source is one template (formula_id) or one TikTok link (tiktok_url). A swap must change at least one thing: a character, a product that has images, or a written content_anchor. It spends credits per second rendered, one video per character and per extra ratio: get quote_remake's price for the same arguments and the user's go-ahead first. Each call is a new order: calling it again spends again. If no answer arrives, check get_batch or list_tasks before sending it again. The answer's mode is not adapt or swap: generate = videos queued (task_ids); analyze_then_generate = the link is analyzed first, then its videos join the batch. Follow batch_id with get_batch. 402: nothing was submitted. 429 with code server_busy: nothing was created, wait 30 seconds, then submit once more.",
+      "effect": "spend",
+      "name": "remake_video",
+      "params": [
+        {
+          "default": null,
+          "description": "Source option (give exactly one source): a video file (mp4, mov, avi, mkv or webm, up to 100 MB) no longer than max_render_duration in the account options.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "video",
+          "required": false,
+          "type": "file"
+        },
+        {
+          "default": "",
+          "description": "Source option (give exactly one source): a TikTok link to one specific video, as its video page or a share short link; a profile page is refused.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "tiktok_url",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Source option (give exactly one source): the id of an analyzed template, the account's own or a public one.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "formula_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Character ids (the `id` values of the character list) in one string: comma-separated (caden,chloe) or a JSON array ([\"caden\",\"chloe\"]). One video is made per character, and only a character whose has_any_active_avatar is true is accepted. Empty makes one video with no character (adapt: the engine invents the person; swap: the source's person stays). In swap mode a character alone counts as the change only when the source shows a person.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "character_ids",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Id of the product to feature in the video; left out or empty, the video has no product. In swap mode only a product that has images changes anything.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "product_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Up to 5000 characters. In adapt mode, the optional creative direction for the new video: the story, lines, captions and pacing to aim for. In swap mode, what to change: required unless a character or a product with an image is given. Writing a product image's name here puts that image on screen.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "content_anchor",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Note for the analysis of a new source saying where its hook or payoff is, up to 5000 characters; ignored when the source is already analyzed.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "user_hint",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "en",
+          "description": "Language of the video's spoken lines, captions and suggested post text, as one of these codes: en, es, pt, id, de, fr, it, ja, zh-CN (default en). Ignored in swap mode, which keeps the source's language.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "language",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "on_camera",
+          "description": "on_camera (the default) shows the product in the picture; off_camera keeps it out of the picture and conveys it through voiceover and captions. Used only with product_id. Ignored in swap mode.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "product_visibility",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Music of an adapt video made from an analyzed template, by the template's `bgm_status`. source keeps the template's original music: it needs bgm_status active or policy_violation. source_ref lets the original music guide a newly generated soundtrack: it needs bgm_status active. sd2 generates new music. Empty picks automatically: the original music when the template has music that is not switched off, generated music otherwise. On a template whose bgm_status is none, source and source_ref are accepted and the video gets generated music; on disabled both are refused, and so is source_ref on policy_violation. Ignored for a new source and in swap mode.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "bgm_mode",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Video engine: an `id` from the `video_backends` list of the account options. Left out, this account's default engine for this kind of video is used (`default_video_pairs` in the account options: adapt, swap or creation).",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "video_backend",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Resolution: one of the chosen engine's `resolutions` in the account options, spelled as listed there. Send it together with video_backend: sent alone it is checked against this account's default engine for this kind of video, so it may be refused or render on an engine the user did not choose. Left out, the chosen engine's default resolution for this account is used.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "resolution",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "[\"9:16\"]",
+          "description": "Aspect ratios to deliver, as a JSON array in one string, e.g. [\"9:16\",\"1:1\"] (default [\"9:16\"]). The vertical ratios 9:16, 3:4, 1:1 and 4:5 can be combined, each extra one rendered as its own video; a horizontal ratio (16:9, 4:3 or 21:9) must be the only entry. Ignored in swap mode, which keeps the source's shape.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "video_ratios",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "adapt",
+          "description": "adapt keeps the source's formula and tells a new story; swap keeps the source's shots and changes only the person, the product or what content_anchor names. The user's choice: send it on every call (a call without it runs as adapt).",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "mode",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/riffs",
+      "title": "Remake a video (Adapt or Swap)"
+    },
+    {
+      "consumed_by": null,
+      "description": "Make an original video from a written creative direction (content_anchor, required: it is the whole script), with no source video or template. It spends credits per second of video rendered, one video per character: get the price from quote_create with the same arguments and the user's go-ahead first. duration_mode fixed with duration_seconds sets the length and so the cost; smart lets the length follow the content, up to 45 seconds and to what the balance covers. Always send duration_mode, and duration_seconds with fixed: a call without duration_mode runs as smart, whatever length the user approved. Each call is a new order: calling it again spends again. If no answer arrives, check get_batch or list_tasks before sending it again. The answer's task_ids are the videos, one per character (total says how many); follow batch_id with get_batch. A 402 means nothing was submitted.",
+      "effect": "spend",
+      "name": "create_video",
+      "params": [
+        {
+          "default": null,
+          "description": "The creative direction the video is written from, 1 to 5000 characters: the story or scene, the spoken lines, the captions and the pacing.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "content_anchor",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": [],
+          "description": "Character ids (the `id` values of the character list): one video is made per character, and only a character whose has_any_active_avatar is true is accepted. An empty list makes one video whose on-screen person the engine invents.",
+          "enum": null,
+          "in": "json",
+          "items": "string",
+          "name": "character_ids",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "default": null,
+          "description": "Id of the product to feature in the video; left out or empty, the video has no product.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "product_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "on_camera",
+          "description": "on_camera (the default) shows the product in the picture; off_camera keeps it out of the picture and conveys it through voiceover and captions. Used only with product_id. on_camera needs a product with at least one image.",
+          "enum": [
+            "on_camera",
+            "off_camera"
+          ],
+          "in": "json",
+          "items": null,
+          "name": "product_visibility",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "smart",
+          "description": "How the length is set: fixed renders duration_seconds; smart lets the engine pick the length, up to what the balance covers and at most 45 seconds. Left out, the call runs as smart.",
+          "enum": [
+            "smart",
+            "fixed"
+          ],
+          "in": "json",
+          "items": null,
+          "name": "duration_mode",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Length of the video in whole seconds, 4 to 45: required when duration_mode is fixed, ignored when it is smart or left out.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "duration_seconds",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "default": "en",
+          "description": "Language of the video's spoken lines, captions and suggested post text, as one of these codes: en, es, pt, id, de, fr, it, ja, zh-CN (default en).",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "language",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Resolution: one of the chosen engine's `resolutions` in the account options, spelled as listed there. Send it together with video_backend: sent alone it is checked against this account's default engine for this kind of video, so it may be refused or render on an engine the user did not choose. Left out, the chosen engine's default resolution for this account is used.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "resolution",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Video engine: an `id` from the `video_backends` list of the account options. Left out, this account's default engine for this kind of video is used (`default_video_pairs` in the account options: adapt, swap or creation).",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "video_backend",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "9:16",
+          "description": "Aspect ratio of the video: 9:16 (the default), 3:4, 1:1, 4:5, 16:9, 4:3 or 21:9. One ratio per submit. Further ratios can be added only to a vertical video (9:16, 3:4, 1:1 or 4:5), never to a 16:9, 4:3 or 21:9 one.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "video_ratio",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/creation/batch",
+      "title": "Create a video from an idea"
+    },
+    {
+      "consumed_by": null,
+      "description": "Add vertical aspect ratios (9:16, 3:4, 1:1, 4:5) to finished vertical videos: each new ratio renders the existing video again in the new frame, with the same shots, sound and subtitles, on the original's engine and resolution. It spends credits per added ratio: quote_ratios gives the exact price and the ratios that already exist, so call it and get the user's go-ahead first. Each call is a new order: it spends for every ratio it starts, and skips, without charge, a ratio the video already has (delivered or in progress). If no answer arrives, check get_batch or list_tasks before sending it again. Returns the submitted tasks, the skipped ones with a reason, and a batch_id to follow with get_batch.",
+      "effect": "spend",
+      "name": "add_ratios",
+      "params": [
+        {
+          "default": null,
+          "description": "Asset ids of the finished videos to add ratios to (adapt, creation or swap videos); any ratio version of a video stands for its whole family.",
+          "enum": null,
+          "in": "json",
+          "items": "string",
+          "name": "source_asset_ids",
+          "required": true,
+          "type": "array"
+        },
+        {
+          "default": null,
+          "description": "Vertical aspect ratios to add to each video: any of 9:16, 3:4, 1:1 and 4:5. A ratio a video's family already has is skipped. Always send it: left out it is 9:16 alone, which on a 3:4, 1:1 or 4:5 video orders a new 9:16 version and spends credits.",
+          "enum": null,
+          "in": "json",
+          "items": "string",
+          "name": "video_ratios",
+          "required": false,
+          "type": "array"
+        }
+      ],
+      "route": "POST /api/pipeline/backfill",
+      "title": "Add aspect ratios"
+    },
+    {
+      "consumed_by": null,
+      "description": "Stop a queued or running task. Seconds of video already rendered stay charged, and a task in its final steps cannot be stopped (409) and will deliver. Use it only when the user asks to stop.",
+      "effect": "write",
+      "name": "cancel_task",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of the task, as returned by a submit or shown in a batch or task list.",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "task_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/tasks/{task_id}/cancel",
+      "title": "Stop a task"
+    },
+    {
+      "consumed_by": null,
+      "description": "Run a failed or interrupted task again, within 24 hours of its first submission. It reuses the parts that finished and charges only what it renders again, which can reach the full video's price (quote_remake or quote_create with the same arguments gives that figure), so say that and get the user's go-ahead first. Each call is a new order: it runs the task once more and spends for what it renders again. If no answer arrives, check get_batch or list_tasks before sending it again. A refusal restarts nothing: 410 too old (offer a new submit with the same options), 409 still shutting down (wait a minute, try once more), 400 not failed (read its status).",
+      "effect": "spend",
+      "name": "retry_task",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of the task, as returned by a submit or shown in a batch or task list.",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "task_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/tasks/{task_id}/retry",
+      "title": "Retry a failed task"
+    },
+    {
+      "consumed_by": null,
+      "description": "Analyze a TikTok video link into a template in the user's own library, without making a video. tiktok_url is required: the link is the only source this tool takes. It costs no credits but is not open to every account: one that cannot use it gets a 403 and can pass the same link to remake_video instead. Returns a task_id to watch with list_tasks; when it completes the template appears in list_templates.",
+      "effect": "write",
+      "name": "analyze_template",
+      "params": [
+        {
+          "default": null,
+          "description": "The video to analyze, as a file (mp4, mov, avi, mkv or webm, up to 100 MB) no longer than max_render_duration in the account options; send it or tiktok_url.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "video",
+          "required": false,
+          "type": "file"
+        },
+        {
+          "default": null,
+          "description": "Optional: the music the uploaded video uses, as an audio file (mp3, m4a, wav, aac, ogg or flac, up to 20 MB), kept as the template's original music; a track that does not match the video's sound is refused. Ignored with tiktok_url.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "bgm",
+          "required": false,
+          "type": "file"
+        },
+        {
+          "default": "",
+          "description": "The video to analyze, as a TikTok link to one specific video (its video page or a share short link; a profile page is refused).",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "tiktok_url",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "Untitled",
+          "description": "Name for the new template; left out, the template is named from the video once the analysis finishes.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "name",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Optional note for the analysis saying where the video's hook or payoff is, up to 5000 characters.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "user_hint",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/formulas/analyze",
+      "title": "Turn a TikTok into a template"
+    },
+    {
+      "consumed_by": null,
+      "description": "Create a product from a name and a description (the description is the only source of product facts a video draws on), once the user has confirmed both and just before the video is submitted. Returns the product with its id; add its images with add_product_image. The number of products an account may own is capped (creation_limits in get_options); past the cap the call is refused, so reuse an existing product.",
+      "effect": "write",
+      "name": "create_product",
+      "params": [
+        {
+          "default": null,
+          "description": "The product's name.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "name",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "What the product is, what it does and who it is for: the only product facts a video draws on.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "description",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Who the product is for (optional).",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "target_audience",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/products",
+      "title": "Create a product"
+    },
+    {
+      "consumed_by": null,
+      "description": "Add an image to a product from a public https image link, with a name. image_url and name are both required. Writing that name in a video's content_anchor puts the image on screen. A product holds at most 8 images; add several one after another, never in parallel.",
+      "effect": "write",
+      "name": "add_product_image",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of the product the image is added to.",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "product_id",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "The image as a file (jpg, jpeg, png or webp, up to 50 MB); send it or image_url, not both.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "file",
+          "required": false,
+          "type": "file"
+        },
+        {
+          "default": "",
+          "description": "Public https link to the image; a plain http link, or a host that is not public, is refused.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "image_url",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Custom id for the image; left empty, one is derived from the image's source (for a link, from the link).",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "image_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Name of the image (required), unique within the product; writing this name in a video's content_anchor puts the image on screen.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "name",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "What the image shows (optional).",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "description",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "When this image should be used in a video (optional).",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "usage_context",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "locked (the default: the engine never edits the image) or mutable (the engine may edit it to fit the scene).",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "content_policy",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/products/{product_id}/images",
+      "title": "Add a product image"
+    },
+    {
+      "consumed_by": null,
+      "description": "Replace a finished video's caption list with the complete list you send: an entry left out is deleted from the video, a new object is added. Start from get_subtitles, change only what you mean to change, and keep every other entry (graphic layers too) and every key under params. A line whose align_status is dropped_conflict is not in the video now and any render adds it: retime or delete it first. Never add text that is already part of the picture: it would show twice. Saving costs no credits and does not change the video until burn_subtitles.",
+      "effect": "write",
+      "name": "save_subtitles",
+      "params": [
+        {
+          "default": null,
+          "description": "Asset id of the finished video (an asset whose asset_role is final_reel).",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "asset_id",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "The complete caption list to save in place of the current one. Each entry is an object with id, kind, semantic, time_range ([start, end] in seconds) and params; an entry left out is deleted, a new one is added.",
+          "enum": null,
+          "in": "json",
+          "items": "object",
+          "name": "entities",
+          "required": false,
+          "type": "array"
+        }
+      ],
+      "route": "PUT /api/assets/{asset_id}/subtitles",
+      "title": "Save caption edits"
+    },
+    {
+      "consumed_by": null,
+      "description": "Discard a finished video's saved caption edits and go back to the lines recorded when it was made. It costs no credits and does not change the video itself.",
+      "effect": "write",
+      "name": "reset_subtitles",
+      "params": [
+        {
+          "default": null,
+          "description": "Asset id of the finished video (an asset whose asset_role is final_reel).",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "asset_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "DELETE /api/assets/{asset_id}/subtitles/edits",
+      "title": "Undo caption edits"
+    },
+    {
+      "consumed_by": null,
+      "description": "Render a new version of a finished video with its current caption list burned in. The new version takes the video's place: the library, get_video_link and a public share link of the video then show it (earlier versions are kept, not deleted). Call it once, after all edits: there is no preview, so give the user the new version's link when the task is done. It costs no credits and returns a task_id and batch_id to follow with get_batch. A 409 means a burn for this video is already running; at most 6 a minute.",
+      "effect": "write",
+      "name": "burn_subtitles",
+      "params": [
+        {
+          "default": null,
+          "description": "Asset id of the finished video (an asset whose asset_role is final_reel).",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "asset_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/assets/{asset_id}/subtitles/burn",
+      "title": "Render captions into a new version"
+    },
+    {
+      "consumed_by": null,
+      "description": "Record the caption layer of a finished video that has none stored (get_subtitles answered 404), from the video's script; run it even when you only mean to add lines, or the next render drops the lines the video already shows. It costs no credits and returns a queued task_id to watch with list_tasks, or status exists when a layer is already there. At most 3 every 10 minutes.",
+      "effect": "write",
+      "name": "reconcile_subtitles",
+      "params": [
+        {
+          "default": null,
+          "description": "Asset id of the finished video (an asset whose asset_role is final_reel).",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "asset_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/assets/{asset_id}/subtitles/reconcile",
+      "title": "Rebuild caption lines"
+    },
+    {
+      "consumed_by": null,
+      "description": "Who is signed in.",
+      "effect": "read",
+      "name": "get_account",
+      "params": [],
+      "route": "GET /api/auth/me",
+      "title": "Who is signed in."
+    },
+    {
+      "consumed_by": "login",
+      "description": "Start the skill's one-click sign-in.",
+      "effect": "write",
+      "name": "device_authorize",
+      "params": [
+        {
+          "default": null,
+          "description": "Optional label naming the client that starts the sign-in (lowercase letters, digits and dashes, up to 64 characters); an invalid value is ignored.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "client",
+          "required": false,
+          "type": "any"
+        }
+      ],
+      "route": "POST /api/skill/device/authorize",
+      "title": "Start the skill's one-click sign-in."
+    },
+    {
+      "consumed_by": "login",
+      "description": "Poll the skill's sign-in for its session.",
+      "effect": "write",
+      "name": "device_token",
+      "params": [
+        {
+          "default": null,
+          "description": "The secret device_code the start of the sign-in returned; never shown to the user.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "device_code",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/skill/device/token",
+      "title": "Poll the skill's sign-in for its session."
+    },
+    {
+      "consumed_by": "logout",
+      "description": "End the session this request is signed in with.",
+      "effect": "write",
+      "name": "sign_out",
+      "params": [],
+      "route": "POST /api/auth/logout",
+      "title": "End the session this request is signed in with."
+    },
+    {
+      "consumed_by": null,
+      "description": "Whether the daily limit allows another submit.",
+      "effect": "read",
+      "name": "get_daily_budget",
+      "params": [],
+      "route": "GET /api/usage/daily-budget",
+      "title": "Whether the daily limit allows another submit."
+    },
+    {
+      "consumed_by": null,
+      "description": "Credits used over a period.",
+      "effect": "read",
+      "name": "get_usage_summary",
+      "params": [
+        {
+          "default": "today",
+          "description": "today | week | month | all",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "period",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "ISO date start (e.g. 2026-04-01)",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "since",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "ISO date end (e.g. 2026-04-02)",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "until",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/usage/summary",
+      "title": "Credits used over a period."
+    },
+    {
+      "consumed_by": null,
+      "description": "Per-day usage rows.",
+      "effect": "read",
+      "name": "get_usage_history",
+      "params": [
+        {
+          "default": null,
+          "description": "查询指定用户（管理员可用）",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "user_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": 30,
+          "description": "查询最近 N 天",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "days",
+          "required": false,
+          "type": "integer"
+        },
+        {
+          "default": null,
+          "description": "起始日期 (YYYY-MM-DD)",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "since",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "结束日期 (YYYY-MM-DD)",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "until",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/usage/history",
+      "title": "Per-day usage rows."
+    },
+    {
+      "consumed_by": null,
+      "description": "The team's members.",
+      "effect": "read",
+      "name": "list_members",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of the account's team: scope_id in the signed-in account (GET /api/auth/me).",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "scope_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/scopes/{scope_id}/members",
+      "title": "The team's members."
+    },
+    {
+      "consumed_by": null,
+      "description": "The plans on sale.",
+      "effect": "read",
+      "name": "list_plans",
+      "params": [],
+      "route": "GET /api/billing/plans",
+      "title": "The plans on sale."
+    },
+    {
+      "consumed_by": null,
+      "description": "The current plan and the per-second rates.",
+      "effect": "read",
+      "name": "get_plan",
+      "params": [],
+      "route": "GET /api/billing/subscription",
+      "title": "The current plan and the per-second rates."
+    },
+    {
+      "consumed_by": null,
+      "description": "End the plan at the end of the paid period.",
+      "effect": "write",
+      "name": "cancel_plan",
+      "params": [],
+      "route": "POST /api/billing/cancel",
+      "title": "End the plan at the end of the paid period."
+    },
+    {
+      "consumed_by": null,
+      "description": "Undo a pending cancel.",
+      "effect": "write",
+      "name": "resume_plan",
+      "params": [],
+      "route": "POST /api/billing/resume",
+      "title": "Undo a pending cancel."
+    },
+    {
+      "consumed_by": null,
+      "description": "The video languages on offer.",
+      "effect": "read",
+      "name": "list_languages",
+      "params": [],
+      "route": "GET /api/languages",
+      "title": "The video languages on offer."
+    },
+    {
+      "consumed_by": null,
+      "description": "Re-analyze one of the account's own templates.",
+      "effect": "write",
+      "name": "refresh_template",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of one of the account's own templates (the `id` of an entry in the template list); a public template is not found.",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "formula_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/formulas/{formula_id}/refresh-analysis",
+      "title": "Re-analyze one of the account's own templates."
+    },
+    {
+      "consumed_by": null,
+      "description": "Rename a template or change its hint.",
+      "effect": "write",
+      "name": "update_template",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of one of the account's own templates (the `id` of an entry in the template list); a public template is not found.",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "formula_id",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "New name for the template; left out, the name stays. A name another of the account's templates has is refused.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "name",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Free-text notes kept with the template; an empty string clears them, left out they stay.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "notes",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "archived puts the template away, analyzed brings an archived one back; left out, the status stays.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "status",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Note for the analysis saying where the video's hook or payoff is, up to 5000 characters; null or an empty string clears it, left out it stays. It takes effect at the next refresh-analysis.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "user_hint",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "route": "PATCH /api/formulas/{formula_id}",
+      "title": "Rename a template or change its hint."
+    },
+    {
+      "consumed_by": null,
+      "description": "Price one swap video.",
+      "effect": "read",
+      "name": "quote_swap",
+      "params": [
+        {
+          "default": "",
+          "description": "Id of the analyzed template to swap from, the account's own or a public one. Required.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "formula_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Video engine: an `id` from the `video_backends` list of the account options. Left out, this account's default engine for this kind of video is used (`default_video_pairs` in the account options: adapt, swap or creation).",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "video_backend",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Resolution: one of the chosen engine's `resolutions` in the account options, spelled as listed there. Send it together with video_backend: sent alone it is checked against this account's default engine for this kind of video, so it may be refused or render on an engine the user did not choose. Left out, the chosen engine's default resolution for this account is used.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "resolution",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/riffs/swap-quote",
+      "title": "Price one swap video."
+    },
+    {
+      "consumed_by": null,
+      "description": "Make videos from an analyzed template (JSON body).",
+      "effect": "spend",
+      "name": "remake_video_batch",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of the template the videos are made from: an analyzed one (status analyzed, analysis_prompt_is_latest true), the account's own or a public one.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "formula_id",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Character ids as a JSON array; one video is made per character. Empty (the default) makes one video with no character: the engine invents the person.",
+          "enum": null,
+          "in": "json",
+          "items": "string",
+          "name": "character_ids",
+          "required": false,
+          "type": "array"
+        },
+        {
+          "default": null,
+          "description": "Id of the product to feature in the video; null or left out, the video has no product.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "product_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Optional creative direction for the new video, up to 5000 characters: the story, lines, captions and pacing to aim for.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "content_anchor",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Language of the video's spoken lines, captions and suggested post text, as one of these codes: en, es, pt, id, de, fr, it, ja, zh-CN. Required.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "language",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Music of the videos, by the template's `bgm_status`: source keeps the template's original music, source_ref lets it guide newly generated music, sd2 generates new music, custom uses the library track bgm_track_id. Left out, the original music is kept when the template has music that is not switched off, and new music is generated otherwise.",
+          "enum": [
+            "source",
+            "source_ref",
+            "sd2",
+            "custom"
+          ],
+          "in": "json",
+          "items": null,
+          "name": "bgm_mode",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Id of a music library track: required with bgm_mode custom, ignored otherwise.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "bgm_track_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "on_camera",
+          "description": "on_camera (the default) shows the product in the picture; off_camera keeps it out of the picture and conveys it through voiceover and captions. Used only with product_id.",
+          "enum": [
+            "on_camera",
+            "off_camera"
+          ],
+          "in": "json",
+          "items": null,
+          "name": "product_visibility",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "",
+          "description": "Resolution: one of the chosen engine's `resolutions` in the account options, spelled as listed there. Send it together with video_backend: sent alone it is checked against this account's default engine for this kind of video, so it may be refused or render on an engine the user did not choose. Left out, the chosen engine's default resolution for this account is used.",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "resolution",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Video engine: an `id` from the `video_backends` list of the account options. Left out, this account's default engine for this kind of video is used (`default_video_pairs` in the account options: adapt, swap or creation).",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "video_backend",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Aspect ratios to deliver, as a JSON array (default [\"9:16\"]). The vertical ratios 9:16, 3:4, 1:1 and 4:5 can be combined, each extra one rendered as its own video; a horizontal ratio (16:9, 4:3 or 21:9) must be the only entry.",
+          "enum": null,
+          "in": "json",
+          "items": "string",
+          "name": "video_ratios",
+          "required": false,
+          "type": "array"
+        }
+      ],
+      "route": "POST /api/pipeline/batch",
+      "title": "Make videos from an analyzed template (JSON body)."
+    },
+    {
+      "consumed_by": null,
+      "description": "One task.",
+      "effect": "read",
+      "name": "get_task",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of the task, as returned by a submit or shown in a batch or task list.",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "task_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/tasks/{task_id}",
+      "title": "One task."
+    },
+    {
+      "consumed_by": null,
+      "description": "What a task extracted or rewrote.",
+      "effect": "read",
+      "name": "get_task_content",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of the task, as returned by a submit or shown in a batch or task list.",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "task_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/tasks/{task_id}/content",
+      "title": "What a task extracted or rewrote."
+    },
+    {
+      "consumed_by": null,
+      "description": "Task counts by type and status.",
+      "effect": "read",
+      "name": "count_tasks",
+      "params": [
+        {
+          "default": null,
+          "description": "Same semantics as /tasks date_from.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "date_from",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Same semantics as /tasks date_to.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "date_to",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Same semantics as /tasks submitted_by_user_id.",
+          "enum": null,
+          "in": "query",
+          "items": null,
+          "name": "submitted_by_user_id",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "route": "GET /api/tasks/stats",
+      "title": "Task counts by type and status."
+    },
+    {
+      "consumed_by": null,
+      "description": "Upload a reference video or image.",
+      "effect": "write",
+      "name": "upload_reference",
+      "params": [
+        {
+          "default": null,
+          "description": "The file: a video (mp4, mov, avi, mkv or webm, up to 100 MB) or an image (jpg, jpeg or png, up to 50 MB).",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "file",
+          "required": true,
+          "type": "file"
+        },
+        {
+          "default": "Uploaded Asset",
+          "description": "Name of the asset (default Uploaded Asset).",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "name",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": "reference",
+          "description": "reference (the default) for a reference video or image, or product_material for a product's material, which needs product_id.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "asset_role",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Id of a character to link the asset to (its `id` in the character list); optional.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "character_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Id of a product to link the asset to: required with asset_role product_material, optional otherwise.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "product_id",
+          "required": false,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "Free-text notes kept with the asset; optional.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "notes",
+          "required": false,
+          "type": "string"
+        }
+      ],
+      "route": "POST /api/assets/upload",
+      "title": "Upload a reference video or image."
+    },
+    {
+      "consumed_by": null,
+      "description": "Upload a character's voice sample.",
+      "effect": "write",
+      "name": "set_voice_sample",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of the character (its `id` in the character list).",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "character_id",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": null,
+          "description": "The voice sample: an mp3 or wav file up to 5 MB, 4 to 15 seconds of one person speaking (5 to 10 is best) with no music or background noise. It replaces the character's current sample.",
+          "enum": null,
+          "in": "form",
+          "items": null,
+          "name": "audio",
+          "required": true,
+          "type": "file"
+        }
+      ],
+      "route": "POST /api/characters/{character_id}/voice-sample",
+      "title": "Upload a character's voice sample."
+    },
+    {
+      "consumed_by": null,
+      "description": "Remove a character's voice sample.",
+      "effect": "write",
+      "name": "clear_voice_sample",
+      "params": [
+        {
+          "default": null,
+          "description": "Id of the character (its `id` in the character list).",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "character_id",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "route": "DELETE /api/characters/{character_id}/voice-sample",
+      "title": "Remove a character's voice sample."
+    },
+    {
+      "consumed_by": null,
+      "description": "Render one frame with the current captions.",
+      "effect": "read",
+      "name": "preview_subtitles",
+      "params": [
+        {
+          "default": null,
+          "description": "Asset id of the finished video (an asset whose asset_role is final_reel).",
+          "enum": null,
+          "in": "path",
+          "items": null,
+          "name": "asset_id",
+          "required": true,
+          "type": "string"
+        },
+        {
+          "default": 0.0,
+          "description": "Timestamp (seconds) of the frame to render",
+          "enum": null,
+          "in": "json",
+          "items": null,
+          "name": "t",
+          "required": false,
+          "type": "number"
+        }
+      ],
+      "route": "POST /api/assets/{asset_id}/subtitles/preview",
+      "title": "Render one frame with the current captions."
+    }
+  ],
+  "no_answer": {
+    "read": "Riffkit did not answer. Try again in a moment.",
+    "write": "Riffkit did not confirm this request, and it may have been accepted. Call get_batch or list_tasks to check before submitting again."
+  },
+  "own": {
+    "download": {
+      "uses": [
+        "get_video_link"
+      ]
+    },
+    "login": {
+      "uses": [
+        "device_authorize",
+        "device_token"
+      ]
+    },
+    "logout": {
+      "uses": [
+        "sign_out"
+      ]
+    },
+    "wait": {
+      "uses": [
+        "get_batch"
+      ]
+    }
+  },
+  "schema": 1
+}
