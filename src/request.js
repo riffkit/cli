@@ -111,6 +111,8 @@ export async function send({ url, init }) {
     response = await fetch(url, init)
     text = await response.text()
   } catch (err) {
+    // A request given a time limit (init.signal) that ran out.
+    if (err?.name === 'TimeoutError') throw new NoAnswer('no answer in time')
     throw new NoAnswer(err?.cause?.code ?? err?.code ?? 'no connection')
   }
   let body

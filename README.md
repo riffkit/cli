@@ -18,6 +18,8 @@ riffkit login
 
 prints a link and a short code. Open the link, check that the page shows the same code, and click Approve. The terminal signs in by itself: there is no password and nothing to paste. `riffkit logout` signs this terminal out.
 
+Run by an AI agent (`riffkit login --agent`, or with no terminal on stderr), `riffkit login` prints the link and the code on stderr and waits up to 90 seconds, which fits in an agent's command time limit. If the user has not approved by then, it exits with code 12 and says for about how many more minutes the link works: the agent gives the user the link, and once they have approved, runs `riffkit login --agent` again. That run waits for the same link instead of starting a new sign-in, so the link the user has stays the one that counts; two runs at once wait for the same link too. The sign-in waiting for approval is kept in `~/.riffkit/login-pending` (0600) until it is approved or has ended; when the link is no longer valid, the next `riffkit login` starts a new one and prints the new link. An agent passes `--agent` because its shell may give the command a terminal, and then the CLI would wait for a person.
+
 ## Make a video
 
 Every video starts with a price. Quote first, tell whoever is paying what it costs, and only then run the command that spends credits:
@@ -52,7 +54,7 @@ Written into the CLI itself:
 
 | Command | What it does |
 |---|---|
-| `login` | Sign in by approving this terminal in the browser |
+| `login [--agent]` | Sign in by approving this terminal in the browser. `--agent`: run by an AI agent, wait 90 seconds at most, then exit 12 |
 | `logout` | Sign out and remove the saved session |
 | `wait <batch_id> [--timeout seconds]` | Check the batch every 30 seconds until nothing in it is queued or running (gives up after 540 seconds by default). Exits 0 only when every task made its video |
 | `download <asset_id> [-o path]` | Save a finished video over https. Never replaces an existing file; a download cut off midway leaves only a `.part` file |
@@ -75,6 +77,7 @@ stdout is always JSON: the answer Riffkit gave, indented at a terminal and on on
 | 6 | No answer to a write or a spend: it may have been accepted | Check `riffkit list_tasks` or `riffkit get_batch <batch_id>` before running it again |
 | 10 | `wait` reached its timeout: the batch is still running | Run `riffkit wait <batch_id>` again |
 | 11 | `wait`: the batch finished, but a task made no video (it failed, was stopped, or its analysis submitted no video: `result.auto_generate_error`) | Read each task's `error` and `result` in the JSON |
+| 12 | `login --agent` (or `login` with no terminal): the user has not approved the link yet | Give the user the link from stderr; after they approve, run `riffkit login --agent` again |
 
 Nothing is ever retried by the CLI on its own.
 
@@ -87,7 +90,7 @@ Nothing is ever retried by the CLI on its own.
 | Variable | Use |
 |---|---|
 | `RIFFKIT_TOKEN` | A riffkit.ai session to use instead of `~/.riffkit/session` (for CI and containers). It goes to riffkit.ai only: with `RIFFKIT_BASE_URL` set to another server, that server's own session file is used |
-| `RIFFKIT_BASE_URL` | Another Riffkit server, such as a local one (`http://localhost:8000`). Plain http is accepted only for localhost. Each server gets its own session file, `~/.riffkit/session-<host>-<port>` |
+| `RIFFKIT_BASE_URL` | Another Riffkit server, such as a local one (`http://localhost:8000`). Plain http is accepted only for localhost. Each server gets its own session file, `~/.riffkit/session-<host>-<port>`, and its own `~/.riffkit/login-pending-<host>-<port>` |
 | `RIFFKIT_NO_UPDATE_CHECK` | Set to `1` to skip the daily check for a newer CLI (it is also skipped in CI) |
 
 ## Updates

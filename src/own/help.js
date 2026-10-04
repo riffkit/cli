@@ -17,12 +17,13 @@ export default {
     const { own } = ctx
     const name = positionals[0] && normalise(positionals[0])
     if (name && Object.hasOwn(own, name)) {
-      ctx.io.stdout.write(`riffkit ${own[name].usage}\n\n${own[name].summary}.\n`)
+      const details = (own[name].details ?? []).map((line) => `\n${line}\n`).join('')
+      ctx.io.stdout.write(`riffkit ${own[name].usage}\n\n${own[name].summary}.\n${details}`)
       return 0
     }
     const manifest = await ctx.manifest()
     if (!name) {
-      ctx.io.stdout.write(overview(manifest, own))
+      ctx.io.stdout.write(overview(manifest, own, ctx.site.base))
       return 0
     }
     const command = findCommand(manifest, name)
@@ -41,7 +42,7 @@ function rows(lines) {
   return lines.map((line) => `  ${line.map((cell, i) => (i < line.length - 1 ? cell.padEnd(widths[i]) : cell)).join('')}`).join('\n')
 }
 
-function overview(manifest, own) {
+function overview(manifest, own, base) {
   // Each command next to its route: the agent skill names routes, and this is where they meet.
   const sections = EFFECTS.map(([effect, heading]) => {
     const commands = manifest.commands.filter((c) => c.effect === effect && !c.consumed_by)
@@ -49,9 +50,12 @@ function overview(manifest, own) {
   }).filter(Boolean)
   sections.push(`This CLI:\n${rows(Object.values(own).map((c) => [c.usage, c.summary]))}`)
   return [
+    // The skill of the server this run talks to (RIFFKIT_BASE_URL), which may differ from riffkit.ai's.
+    `AI agents: read ${base}/SKILL.md in full first (curl -fsSL ${base}/SKILL.md); it says how to work with Riffkit.`,
+    '',
     'riffkit: Riffkit from the terminal (https://riffkit.ai)',
     '',
-    'Usage: riffkit <command> [<path arguments>] [--option value ...]',
+    'Usage: riffkit <command> [<path arguments>] [--option value ...]    riffkit --version prints the version.',
     '',
     sections.join('\n\n'),
     '',

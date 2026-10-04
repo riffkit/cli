@@ -1,6 +1,6 @@
 {
   "name": "@riffkit/cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Riffkit from the terminal: remake winning short videos into your own, from a script or an AI agent.",
   "type": "module",
   "bin": {

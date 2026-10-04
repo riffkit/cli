@@ -9,8 +9,11 @@ import { USER_AGENT, secure } from '../site.js'
 import { printJson, report } from '../request.js'
 
 export default {
-  usage: 'download <asset_id> [-o path]',
+  usage: 'download <asset_id> [-o|--output path]',
   summary: 'Save a finished video to a file (never replaces an existing file)',
+  details: [
+    'Without -o, saves into the current folder, named after the asset. Prints {asset_id, path, bytes} as JSON on stdout.',
+  ],
   async run(ctx, argv) {
     const { positionals, flags } = parseArgs(argv, { output: 'value' }, { o: 'output' })
     if (positionals.length !== 1) throw usage(`Usage: riffkit ${this.usage}`)

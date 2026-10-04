@@ -10,6 +10,9 @@ const DEFAULT_TIMEOUT = 540
 export default {
   usage: 'wait <batch_id> [--timeout seconds]',
   summary: `Wait until no task of a batch is queued or running (checks every ${POLL_SECONDS} seconds, gives up after ${DEFAULT_TIMEOUT} by default; exit ${EXIT.NO_VIDEO} when a task made no video)`,
+  details: [
+    `Prints the batch as JSON on stdout when it stops waiting. Exit 0: every task made its video (each task's result.asset_id is a video). Exit ${EXIT.WAIT_TIMEOUT}: still running after --timeout; run it again. Exit ${EXIT.NO_VIDEO}: finished, but a task made no video; read that task's error and result.`,
+  ],
   async run(ctx, argv) {
     const { positionals, flags } = parseArgs(argv, { timeout: 'value' })
     if (positionals.length !== 1) throw usage(`Usage: riffkit ${this.usage}`)

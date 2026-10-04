@@ -10,6 +10,7 @@ export const EXIT = Object.freeze({
   NO_ANSWER_WRITE: 6,  // a write or spend got no answer: it may have been accepted
   WAIT_TIMEOUT: 10,    // riffkit wait reached --timeout
   NO_VIDEO: 11,        // riffkit wait: the batch finished, and some task in it made no video
+  LOGIN_PENDING: 12,   // riffkit login with no terminal: the link is not approved yet; run login again once it is
 })
 
 /** A failure the user is told about in one line on stderr. The message never

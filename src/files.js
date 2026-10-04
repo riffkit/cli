@@ -7,20 +7,31 @@ const POSIX = process.platform !== 'win32'
 
 /**
  * Write `text` to `file` so that no reader ever sees half of it and nobody but
- * the user can read it: directory 0700, file 0600, a temporary file renamed
- * into place.
+ * the user can read it: directory 0700, file 0600, a temporary file moved
+ * into place. With `exclusive`, a file already at `file` is kept as it is and
+ * false comes back; otherwise (and when the text was written) true.
  */
-export function writePrivate(file, text) {
+export function writePrivate(file, text, { exclusive = false } = {}) {
   const dir = path.dirname(file)
   fs.mkdirSync(dir, { recursive: true, mode: 0o700 })
   if (POSIX) fs.chmodSync(dir, 0o700)   // a directory made earlier by hand may be wider
   const tmp = `${file}.${process.pid}.${randomBytes(4).toString('hex')}.tmp`
   try {
     fs.writeFileSync(tmp, text, { mode: 0o600, flag: 'wx' })
-    fs.renameSync(tmp, file)
-  } catch (err) {
+    if (!exclusive) {
+      fs.renameSync(tmp, file)
+      return true
+    }
+    // A hard link puts the whole file in place, or fails when one is there already.
+    try {
+      fs.linkSync(tmp, file)
+    } catch (err) {
+      if (err.code === 'EEXIST') return false
+      fs.renameSync(tmp, file)   // a file system without hard links: written, though not exclusively
+    }
+    return true
+  } finally {
     fs.rmSync(tmp, { force: true })
-    throw err
   }
 }
 

@@ -40,6 +40,8 @@ export function siteFrom(env) {
     isDefault,
     dir,
     sessionFile: path.join(dir, isDefault ? 'session' : `session-${key}`),
+    // A sign-in started and not approved yet: the next riffkit login waits for that same link.
+    pendingFile: path.join(dir, isDefault ? 'login-pending' : `login-pending-${key}`),
     manifestFile: path.join(dir, `cli-manifest-${key}.json`),
   }
 }
