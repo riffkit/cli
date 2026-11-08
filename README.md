@@ -27,7 +27,8 @@ Every video starts with a price. Quote first, tell whoever is paying what it cos
 ```sh
 riffkit list_templates --sort used_desc --limit 5
 riffkit quote_remake --formula-id <template_id> --mode adapt
-#   credits in the answer are internal units: divide by 100 for the credits you see
+#   say each amount from its *_shown field as written (credits_shown: "1,000 credits"),
+#   as credits, Riffkit's own unit, not money; never work out credits from the other figures
 riffkit remake_video --formula-id <template_id> --mode adapt --yes
 #   answers with a batch_id
 riffkit wait <batch_id>
