@@ -1,6 +1,6 @@
 # Riffkit CLI
 
-Riffkit from the terminal. Pick a winning short video (a template from the library or a TikTok link), and Riffkit remakes it into your own: your character, your product, your language. The CLI is for people who like a shell and for AI agents that run commands.
+Riffkit from the terminal. Change the outfit, place, product or person in your video: your shots, cuts and timing stay. Or turn a winning short video (a template from the library or a TikTok link) into yours: same formula, your story, your product, your character, your language. Or make one from a written idea. The CLI is for people who like a shell and for AI agents that run commands.
 
 ```sh
 npm i -g @riffkit/cli
@@ -22,19 +22,33 @@ Run by an AI agent (`riffkit login --agent`, or with no terminal on stderr), `ri
 
 ## Make a video
 
-Every video starts with a price. Quote first, tell whoever is paying what it costs, and only then run the command that spends credits:
+Every video starts with a price. Quote first, tell whoever is paying what it costs, and only then run the command that spends credits.
+
+**Swap** re-renders a video of your own shot for shot, with the camera, cuts and timing kept, and changes what you name:
 
 ```sh
-riffkit list_templates --sort used_desc --limit 5
-riffkit quote_remake --formula-id <template_id> --mode adapt
+riffkit quote_remake --mode swap --upload-seconds 18     # the clip's length in seconds
 #   say each amount from its *_shown field as written (credits_shown: "1,000 credits"),
 #   as credits, Riffkit's own unit, not money; never work out credits from the other figures
-riffkit remake_video --formula-id <template_id> --mode adapt --yes
+riffkit remake_video --mode swap --video ./my-clip.mp4 \
+  --content-anchor "Change the denim jacket to a long red wool coat" --yes
 #   answers with a batch_id
 riffkit wait <batch_id>
 #   when it is done, each task's result.asset_id is a finished video
 riffkit download <asset_id>
 ```
+
+`--content-anchor` says what to change: the outfit, the place, or the whole look ("1990s hand-drawn anime"). `--character-ids` puts a saved character in place of the person (quote it with `--n-characters` set to how many characters you pass: one video is made per character), `--product-id` puts your product in (one with photos), and `--reference-ids` shows a picture of the outfit or place (ids from `list_characters`, `list_products`, `list_references`; `riffkit help remake_video` shows how each is written). A swap keeps the source's language and shape. To swap a template from the library, pass `--formula-id <template_id>` to both commands, in place of `--upload-seconds` and `--video`. For a video on your phone, `riffkit create_upload_link` gives a link to open there and add it; once `riffkit get_upload <upload_id>` reads `ready`, pass `--upload-id <upload_id>` to both commands the same way.
+
+**Adapt** works out why a winning short video works (the hook, the pacing, the emotional beats) and makes new footage of that formula for your story, product and character:
+
+```sh
+riffkit list_templates --sort used_desc --limit 5
+riffkit quote_remake --formula-id <template_id> --mode adapt
+riffkit remake_video --formula-id <template_id> --mode adapt --language es --yes
+```
+
+`--tiktok-url <link>` works in place of `--formula-id`. **Create** makes a video from one written idea, with no source video: `riffkit quote_create --duration-mode fixed --duration-seconds 15`, then `riffkit create_video --content-anchor @idea.txt --duration-mode fixed --duration-seconds 15 --yes`. Adapt and Create make the video in any of 10 languages (`--language`: en, es, pt, id, de, fr, it, ja, ko, zh-CN). Both go on with `riffkit wait` and `riffkit download`, as above.
 
 A command that spends credits asks `Run it? [y/N]` when you run it yourself. When there is no terminal to ask in (an agent, a script) it refuses with exit code 3 unless `--yes` is given. An agent should pass `--yes` only after it has shown the user the plan and the price and the user has said yes.
 

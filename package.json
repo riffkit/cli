@@ -1,7 +1,7 @@
 {
   "name": "@riffkit/cli",
-  "version": "0.2.0",
-  "description": "Riffkit from the terminal: remake winning short videos into your own, from a script or an AI agent.",
+  "version": "0.2.1",
+  "description": "Riffkit from the terminal: change the outfit, place, product or person in your video, or riff a winning short video, from a script or an AI agent.",
   "type": "module",
   "bin": {
     "riffkit": "bin/riffkit.js"
@@ -32,7 +32,10 @@
     "short-video",
     "tiktok",
     "cli",
-    "ai-agent"
+    "ai-agent",
+    "swap",
+    "ai-video",
+    "video-editing"
   ],
   "license": "MIT"
 }
